@@ -20,6 +20,7 @@ from coldstore.valve import OPEN, validate_valve
 
 from . import checks, history, ops
 from . import describe as describe_module
+from . import segments as segments_module
 from . import simulate as simulate_module
 from . import snapshot as snapshot_module
 from . import telemetry as telemetry_module
@@ -102,6 +103,14 @@ def ops_counters(server: "Server", request: Request) -> Response:
 
 def ops_reset_store(server: "Server", request: Request) -> Response:
     return json_response(ops.reset_store(server.runtime))
+
+
+def store_segments(server: "Server", request: Request) -> Response:
+    return json_response(segments_module.segment_report(server.runtime))
+
+
+def store_recovery(server: "Server", request: Request) -> Response:
+    return json_response(segments_module.recovery_report(server.runtime))
 
 
 def telemetry(server: "Server", request: Request) -> Response:

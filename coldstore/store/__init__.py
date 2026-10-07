@@ -4,10 +4,14 @@ from .commands import append_command, clear_commands, load_commands
 from .epoch import advance_epoch, load_float, save_float
 from .history import Event, append_event, event_count, list_events
 from .report import StoreState, describe_store, export_state, has_key, store_state
+from .segments import RecoveryRecord, SegmentHealth, SegmentedStore, segment_for
 from .store import Store
 
 __all__ = [
     "Event",
+    "RecoveryRecord",
+    "SegmentHealth",
+    "SegmentedStore",
     "Store",
     "StoreState",
     "advance_epoch",
@@ -22,5 +26,6 @@ __all__ = [
     "load_commands",
     "load_float",
     "save_float",
+    "segment_for",
     "store_state",
 ]

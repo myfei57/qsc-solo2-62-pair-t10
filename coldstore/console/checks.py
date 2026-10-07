@@ -2,13 +2,38 @@
 
 from __future__ import annotations
 
+from coldstore.store import SegmentedStore
+
 from .runtime import Runtime
+
+
+def _store_check(rt: Runtime) -> dict[str, str]:
+    store = rt.store
+    detail = f"keys={store.count()}"
+    if not isinstance(store, SegmentedStore):
+        return {"name": "store", "status": "ok", "detail": detail}
+    health = store.segment_health()
+    degraded = [row.name for row in health if row.status == "degraded"]
+    recovered = [row.name for row in health if row.status == "recovered"]
+    if degraded:
+        return {
+            "name": "store",
+            "status": "fail",
+            "detail": f"{detail} degraded={','.join(degraded)}",
+        }
+    if recovered:
+        return {
+            "name": "store",
+            "status": "warn",
+            "detail": f"{detail} recovered={','.join(recovered)}",
+        }
+    return {"name": "store", "status": "ok", "detail": f"{detail} segments={len(health)}"}
 
 
 def run_checks(rt: Runtime) -> list[dict[str, str]]:
     """Return one check row per mutable component."""
 
-    checks = [{"name": "store", "status": "ok", "detail": f"keys={rt.store.count()}"}]
+    checks = [_store_check(rt)]
 
     if rt.interlock.is_tripped():
         checks.append(

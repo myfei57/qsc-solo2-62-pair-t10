@@ -10,7 +10,7 @@ from wsgiref.simple_server import WSGIServer, make_server
 from .console.seed import seed_defaults
 from .console.server import Server
 from .console.version import version_string
-from .store import Store
+from .store import SegmentedStore
 
 LOGGER = logging.getLogger("coldstore")
 
@@ -43,7 +43,17 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
-    store = Store.open(args.store)
+    store = SegmentedStore.open(args.store)
+    records = store.recovery_records()
+    if records:
+        LOGGER.warning(
+            "store recovery applied %d record(s), latest: %s %s v%d -> v%d; see /store/recovery",
+            len(records),
+            records[-1].segment,
+            records[-1].action,
+            records[-1].from_version,
+            records[-1].to_version,
+        )
     try:
         seed_defaults(store)
         host, port = parse_address(args.addr)
