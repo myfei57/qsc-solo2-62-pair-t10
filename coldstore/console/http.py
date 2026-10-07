@@ -58,6 +58,10 @@ def csv_response(text: str, status: int = 200) -> Response:
     return Response(status=status, body=text.encode("utf-8"), content_type="text/csv; charset=utf-8")
 
 
+def html_response(text: str, status: int = 200) -> Response:
+    return Response(status=status, body=text.encode("utf-8"), content_type="text/html; charset=utf-8")
+
+
 def error_response(status: int, message: str) -> Response:
     return json_response({"error": message}, status=status)
 

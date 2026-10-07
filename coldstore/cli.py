@@ -10,6 +10,7 @@ from wsgiref.simple_server import WSGIServer, make_server
 from .console.seed import seed_defaults
 from .console.server import Server
 from .console.version import version_string
+from .segments import SegmentedStore, import_legacy
 from .store import Store
 
 LOGGER = logging.getLogger("coldstore")
@@ -30,10 +31,39 @@ def parse_address(value: str) -> tuple[str, int]:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="coldstore", description="control service")
-    parser.add_argument("--store", default="state.json", help="file path for the persistent store")
+    parser.add_argument(
+        "--store-dir",
+        default="state",
+        help="root directory of the segmented store (default: state/)",
+    )
+    parser.add_argument(
+        "--store",
+        default="",
+        help="legacy single-file store path; enables legacy mode",
+    )
+    parser.add_argument(
+        "--migrate-from",
+        default="",
+        help="import a legacy JSON store into the segmented store at startup",
+    )
     parser.add_argument("--addr", default=":8080", help="listen address as host:port")
     parser.add_argument("--version", action="store_true", help="print the build version and exit")
     return parser
+
+
+def open_store(args: argparse.Namespace) -> Store:
+    """Open the segmented store by default, the legacy one on request."""
+
+    if args.store:
+        store = Store.open(args.store)
+        LOGGER.info("legacy single-file store at %s", store.path)
+        return store
+    segmented = SegmentedStore.open(args.store_dir)
+    LOGGER.info("segmented store rooted at %s", segmented.path)
+    if args.migrate_from:
+        result = import_legacy(segmented, args.migrate_from)
+        LOGGER.info("migrated legacy store: %s", result)
+    return segmented
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -43,7 +73,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
-    store = Store.open(args.store)
+    store = open_store(args)
     try:
         seed_defaults(store)
         host, port = parse_address(args.addr)

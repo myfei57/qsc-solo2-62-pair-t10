@@ -20,11 +20,12 @@ from coldstore.valve import OPEN, validate_valve
 
 from . import checks, history, ops
 from . import describe as describe_module
+from . import segments as segments_module
 from . import simulate as simulate_module
 from . import snapshot as snapshot_module
 from . import telemetry as telemetry_module
 from .cycle import run_cycle
-from .http import Request, Response, csv_response, json_response, text_response
+from .http import Request, Response, csv_response, html_response, json_response, text_response
 from .report import text_report
 from .routes import route_table
 from .system import system_payload
@@ -102,6 +103,19 @@ def ops_counters(server: "Server", request: Request) -> Response:
 
 def ops_reset_store(server: "Server", request: Request) -> Response:
     return json_response(ops.reset_store(server.runtime))
+
+
+def segments_health(server: "Server", request: Request) -> Response:
+    return json_response(segments_module.collect(server.runtime.store))
+
+
+def segments_journal(server: "Server", request: Request) -> Response:
+    segment = request.query.get("segment", [""])[0]
+    return json_response(segments_module.journal_payload(server.runtime.store, segment=segment))
+
+
+def ops_segments(server: "Server", request: Request) -> Response:
+    return html_response(segments_module.render_page(server.runtime.store))
 
 
 def telemetry(server: "Server", request: Request) -> Response:

@@ -12,4 +12,4 @@ RUN python -m compileall -q /app/coldstore
 
 EXPOSE 8080
 
-CMD ["python", "-m", "coldstore", "--store", "/data/state.json", "--addr", "0.0.0.0:8080"]
+CMD ["python", "-m", "coldstore", "--store-dir", "/data/state", "--addr", "0.0.0.0:8080"]
